@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { FcAddImage } from "react-icons/fc";
+import { X } from "lucide-react";
 import toast from "react-hot-toast";
+import { IoSend } from "react-icons/io5";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -92,7 +94,7 @@ const MessageInput = () => {
                      ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
           >
-            <Image size={20} />
+            <FcAddImage size={20} />
           </button>
         </div>
         <button
@@ -100,7 +102,7 @@ const MessageInput = () => {
           className="btn btn-sm btn-circle"
           disabled={!text.trim() && !imagePreview}
         >
-          <Send size={22} />
+          <IoSend size={22} />
         </button>
       </form>
     </div>
