@@ -41,5 +41,5 @@ if (process.env.NODE_ENV === "production") {
 //   console.log("server is running on PORT:" + PORT);
 //   connectDB();
 // });
-
+connectDB();
 export default app;
