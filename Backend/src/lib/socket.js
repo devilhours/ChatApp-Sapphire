@@ -7,7 +7,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://chatapp-sapphire-frontend.onrender.com"],
+    origin: "https://chatapp-sapphire-frontend.onrender.com", // Your EXACT frontend URL
+    methods: ["GET", "POST"],
   },
 });
 
