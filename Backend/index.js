@@ -21,6 +21,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: "https://chatapp-sapphire-frontend.onrender.com",
+    methods: ["GET", "POST"],
     credentials: true,
   })
 );
