@@ -18,14 +18,10 @@ const messageSchema = new mongoose.Schema(
     image: {
       type: String,
     },
-    // ADD THIS FIELD
-    seen: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true }
 );
 
 const Message = mongoose.model("Message", messageSchema);
+
 export default Message;
