@@ -8,7 +8,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://chatapp-sapphire-frontend.onrender.com",
+    origin: "https://chatapp-sapphire-frontend.onrender.com", // Your EXACT frontend URL
     methods: ["GET", "POST"],
   },
 });
@@ -27,7 +27,7 @@ io.on("connection", (socket) => {
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  // --- NEW: LISTEN FOR TYPING EVENTS ---
+  // ✅ LISTEN FOR TYPING EVENTS
   socket.on("typing", ({ receiverId }) => {
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // --- NEW: LISTEN FOR MARK AS SEEN EVENT ---
+  // ✅ LISTEN FOR MARK AS SEEN EVENT
   socket.on("markAsSeen", async ({ conversationId, userId }) => {
     try {
       await Message.updateMany(
