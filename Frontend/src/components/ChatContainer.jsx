@@ -22,37 +22,49 @@ const ChatContainer = () => {
   // Effect for handling typing and seen events
   useEffect(() => {
     if (socket) {
+      // Listener for incoming messages
+      socket.on("newMessage", (newMessage) => {
+        addMessage(newMessage);
+      });
+
+      // Listener for typing indicator
       socket.on("typing", ({ senderId }) => {
-        if (senderId === selectedUser._id) setIsTyping(true);
+        if (senderId === selectedUser?._id) setIsTyping(true);
       });
       socket.on("stopTyping", () => setIsTyping(false));
+
+      // Listener for read receipts
       socket.on("messagesSeen", ({ conversationId }) => {
-        if (authUser._id === conversationId) {
-          const updatedMessages = messages.map(msg => ({ ...msg, seen: true }));
-          setMessages(updatedMessages);
+        if (selectedUser?._id === conversationId) {
+          // Use the functional update form to avoid dependency on 'messages'
+          setMessages(prevMessages => 
+            prevMessages.map(msg => ({ ...msg, seen: true }))
+          );
         }
       });
 
+      // Cleanup listeners on component unmount
       return () => {
+        socket.off("newMessage");
         socket.off("typing");
         socket.off("stopTyping");
         socket.off("messagesSeen");
       };
     }
-  }, [socket, selectedUser._id, authUser._id, messages, setMessages]);
+  }, [socket, selectedUser?._id, addMessage, setMessages]); // Dependencies are now stable
 
-  // Effect to mark messages as seen when chat is open
+  // Effect to mark messages as seen
   useEffect(() => {
     if (socket && messages.length > 0) {
-      const unreadMessages = messages.some(msg => !msg.seen && msg.senderId === selectedUser._id);
-      if (unreadMessages) {
+      const unread = messages.some(msg => !msg.seen && msg.senderId === selectedUser._id);
+      if (unread) {
         socket.emit("markAsSeen", {
           conversationId: selectedUser._id,
           userId: authUser._id,
         });
       }
     }
-  }, [socket, selectedUser._id, authUser._id, messages]);
+  }, [socket, selectedUser?._id, authUser._id, messages]);
 
   return (
     <div className="flex-1 flex flex-col bg-gray-900">
