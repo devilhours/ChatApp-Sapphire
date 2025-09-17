@@ -1,13 +1,14 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
+import Message from "../models/message.model.js";
 
 const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://chatapp-sapphire-frontend.onrender.com", // Your EXACT frontend URL
+    origin: "https://chatapp-sapphire-frontend.onrender.com",
     methods: ["GET", "POST"],
   },
 });
@@ -16,7 +17,6 @@ export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
-// used to store online users
 const userSocketMap = {}; // {userId: socketId}
 
 io.on("connection", (socket) => {
@@ -25,8 +25,39 @@ io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId) userSocketMap[userId] = socket.id;
 
-  // io.emit() is used to send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  // --- NEW: LISTEN FOR TYPING EVENTS ---
+  socket.on("typing", ({ receiverId }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("typing", { senderId: userId });
+    }
+  });
+
+  socket.on("stopTyping", ({ receiverId }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("stopTyping");
+    }
+  });
+
+  // --- NEW: LISTEN FOR MARK AS SEEN EVENT ---
+  socket.on("markAsSeen", async ({ conversationId, userId }) => {
+    try {
+      await Message.updateMany(
+        { senderId: conversationId, receiverId: userId, seen: false },
+        { $set: { seen: true } }
+      );
+      
+      const senderSocketId = getReceiverSocketId(conversationId);
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesSeen", { conversationId: userId });
+      }
+    } catch (error) {
+      console.log("Error in markAsSeen event: ", error);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
