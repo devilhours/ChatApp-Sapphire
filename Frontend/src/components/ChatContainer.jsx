@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { useSocket } from "../lib/SocketContextProvider";
+import { useSocket } from "../lib/SocketContextProvider"; // Corrected import path
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import { formatMessageTime } from "../lib/utils";
-import { CheckCheck } from "lucide-react"; // Import a read receipt icon
+import { CheckCheck } from "lucide-react";
 
 const ChatContainer = () => {
-  const { messages, setMessages, selectedUser } = useChatStore();
+  // --- THIS IS THE FIX: Added 'addMessage' to the destructuring ---
+  const { messages, setMessages, addMessage, selectedUser } = useChatStore();
+  
   const { authUser } = useAuthStore();
   const socket = useSocket();
   const messageEndRef = useRef(null);
@@ -18,26 +20,23 @@ const ChatContainer = () => {
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-  
-  // Effect for handling typing and seen events
+
+  // Effect for handling all socket events
   useEffect(() => {
     if (socket) {
-      // Listener for incoming messages
       socket.on("newMessage", (newMessage) => {
+        // Now 'addMessage' is a function and this will work correctly
         addMessage(newMessage);
       });
 
-      // Listener for typing indicator
       socket.on("typing", ({ senderId }) => {
         if (senderId === selectedUser?._id) setIsTyping(true);
       });
       socket.on("stopTyping", () => setIsTyping(false));
 
-      // Listener for read receipts
       socket.on("messagesSeen", ({ conversationId }) => {
         if (selectedUser?._id === conversationId) {
-          // Use the functional update form to avoid dependency on 'messages'
-          setMessages(prevMessages => 
+          setMessages(prevMessages =>
             prevMessages.map(msg => ({ ...msg, seen: true }))
           );
         }
@@ -51,7 +50,7 @@ const ChatContainer = () => {
         socket.off("messagesSeen");
       };
     }
-  }, [socket, selectedUser?._id, addMessage, setMessages]); // Dependencies are now stable
+  }, [socket, selectedUser?._id, addMessage, setMessages]);
 
   // Effect to mark messages as seen
   useEffect(() => {
@@ -94,7 +93,7 @@ const ChatContainer = () => {
         {isTyping && <div className="text-gray-400 text-sm py-2">Typing...</div>}
         <div ref={messageEndRef} />
       </div>
-      <MessageInput receiverId={selectedUser._id} />
+      {selectedUser && <MessageInput receiverId={selectedUser._id} />}
     </div>
   );
 };
